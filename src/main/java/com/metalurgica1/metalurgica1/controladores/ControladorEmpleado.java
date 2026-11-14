@@ -31,7 +31,7 @@ public class ControladorEmpleado {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<EmpleadoDTO> buscarEmpleado(Long id) {
+    public ResponseEntity<EmpleadoDTO> buscarEmpleado(@PathVariable Long id) {
         try {
             EmpleadoDTO empleado = empleadoService.listarEmpleado(id);
             return ResponseEntity.ok(empleado);
