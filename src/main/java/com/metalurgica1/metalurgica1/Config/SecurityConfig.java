@@ -57,6 +57,7 @@ public class SecurityConfig {
                         .requestMatchers("/CRUD metalurgica/**").permitAll()
                         .requestMatchers("/api/solicitudes/crear").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/clientes/{id}").hasRole("CLIENTE")
+                        .requestMatchers(HttpMethod.GET, "/api/registros/buscar/participantes").hasRole("CLIENTE")
                         .requestMatchers("/api/tareas/buscar/**").hasAnyRole("EMPLEADO", "GERENTE", "ADMIN")
                         .requestMatchers("/api/registros/buscar/**").hasAnyRole("EMPLEADO", "CLIENTE", "GERENTE", "ADMIN")
                         .requestMatchers("/api/solicitudes/buscar/**").hasAnyRole("CLIENTE", "GERENTE", "ADMIN")
@@ -83,6 +84,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowedOrigins(List.of("https://meta-gestor-frontend-tkj3.vercel.app/"));
+        configuration.setAllowedOrigins(List.of("http://localhost:4200/"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
         configuration.setAllowCredentials(true);
