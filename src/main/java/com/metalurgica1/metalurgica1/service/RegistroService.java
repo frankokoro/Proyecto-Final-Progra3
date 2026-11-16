@@ -6,7 +6,6 @@ import com.metalurgica1.metalurgica1.modelo.enums.EEstadoActividad;
 import com.metalurgica1.metalurgica1.modelo.enums.EEtiquetaDeAcceso;
 import com.metalurgica1.metalurgica1.modelo.enums.EProceso;
 import com.metalurgica1.metalurgica1.repositorio.IClienteRepository;
-import com.metalurgica1.metalurgica1.repositorio.IEmpleadoRepository;
 import com.metalurgica1.metalurgica1.repositorio.IRegistroRepository;
 import com.metalurgica1.metalurgica1.repositorio.ITareaRepository;
 import com.metalurgica1.metalurgica1.service.Excepciones.ClienteNoEncontradoException;
@@ -20,29 +19,31 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class  RegistroService {
+public class RegistroService {
     private final IRegistroRepository iRegistroRepository;
     private final IClienteRepository iClienteRepository;
     private final ITareaRepository iTareaRepository;
-    private EmpleadoModeloService empleadoModeloService;
+    private final EmpleadoModeloService empleadoModeloService;
+    private final NotificacionClienteService notificacionClienteService;
 
-    public RegistroService(IRegistroRepository iRegistroRepository,EmpleadoModeloService empleadoModeloService, IClienteRepository iClienteRepository, ITareaRepository iTareaRepository, IEmpleadoRepository iEmpleadoRepository) {
-        this.iRegistroRepository = iRegistroRepository;
-        this.iClienteRepository = iClienteRepository;
-        this.iTareaRepository = iTareaRepository;
+    public RegistroService(NotificacionClienteService notificacionClienteService, EmpleadoModeloService empleadoModeloService, ITareaRepository iTareaRepository, IClienteRepository iClienteRepository, IRegistroRepository iRegistroRepository) {
+        this.notificacionClienteService = notificacionClienteService;
         this.empleadoModeloService = empleadoModeloService;
+        this.iTareaRepository = iTareaRepository;
+        this.iClienteRepository = iClienteRepository;
+        this.iRegistroRepository = iRegistroRepository;
     }
 
-    private RegistroDTO convertirADTO(Registro r){
-        return new RegistroDTO(r.getId(),r.getTitulo(),r.getTarea().getId(),
-                r.getCliente().getIdCliente(),r.getEProceso(),listarIdEmpleados(r), r.getPublicado());
+    private RegistroDTO convertirADTO(Registro r) {
+        return new RegistroDTO(r.getId(), r.getTitulo(), r.getTarea().getId(),
+                r.getCliente().getIdCliente(), r.getEProceso(), listarIdEmpleados(r), r.getPublicado());
     }
 
-    public List<RegistroDTO> listarRegistros(){
+    public List<RegistroDTO> listarRegistros() {
         return iRegistroRepository.
                 findAll()
                 .stream()
-                .filter(p-> p.getEEstadoActividad() == EEstadoActividad.ACTIVO)
+                .filter(p -> p.getEEstadoActividad() == EEstadoActividad.ACTIVO)
                 .map(r -> new RegistroDTO(
                         r.getId(),
                         r.getTitulo(),
@@ -53,12 +54,12 @@ public class  RegistroService {
                         r.getPublicado()))
                 .collect(Collectors.toList());
     }
-    public List<RegistroDTO> listarRegistrosClientes(Long id)
-    {
+
+    public List<RegistroDTO> listarRegistrosClientes(Long id) {
         return iRegistroRepository
                 .findAll()
                 .stream()
-                .filter(p->(p.getEEstadoActividad() == EEstadoActividad.ACTIVO) && (p.getCliente().getIdCliente().equals(id)))
+                .filter(p -> (p.getEEstadoActividad() == EEstadoActividad.ACTIVO) && (p.getCliente().getIdCliente().equals(id)))
                 .map(r -> new RegistroDTO(
                         r.getId(),
                         r.getTitulo(),
@@ -69,12 +70,13 @@ public class  RegistroService {
                         r.getPublicado()))
                 .toList();
     }
-    public List<Empleado_modelo> listarEmpleados(){
+
+    public List<Empleado_modelo> listarEmpleados() {
         return iRegistroRepository.findAll().stream().flatMap(registro -> registro.getParticipantes().stream()).toList();
 
     }
-    public List<TareaDTO> listarTareasRegistro(Long id)
-    {
+
+    public List<TareaDTO> listarTareasRegistro(Long id) {
         return iRegistroRepository.findById(id)
                 .stream()
                 .filter(reg -> reg.getEEstadoActividad() == EEstadoActividad.ACTIVO)
@@ -95,7 +97,7 @@ public class  RegistroService {
 
     public RegistroDTO buscarRegistroPorId(Long id) throws RegistroNoEncontradoException {
         Registro r = iRegistroRepository.findById(id)
-                .orElseThrow(()-> new RegistroNoEncontradoException(id));
+                .orElseThrow(() -> new RegistroNoEncontradoException(id));
 
         return new RegistroDTO(
                 r.getId(),
@@ -106,27 +108,29 @@ public class  RegistroService {
                 listarIdEmpleados(r),
                 r.getPublicado());
     }
-    public List<RegistroDTO> buscarPublicados(){
+
+    public List<RegistroDTO> buscarPublicados() {
         return iRegistroRepository.findByPublicadoTrue()
                 .stream()
                 .map(this::convertirADTO)
                 .collect(Collectors.toList());
     }
 
-    public List<RegistroDTO> buscarPorProceso(EProceso proceso){
+    public List<RegistroDTO> buscarPorProceso(EProceso proceso) {
         return iRegistroRepository.findByeProceso(proceso)
                 .stream()
                 .map(this::convertirADTO)
                 .collect(Collectors.toList());
     }
+
     private List<Empleado_modelo> listarEmpleados(CrearRegistroDTO dto) {
         return dto.participantesId().stream()
-                .map(id -> empleadoModeloService.buscarEmpleadoPorId(id))
+                .map(empleadoModeloService::buscarEmpleadoPorId)
                 .map(this::convertirDtoAEntidad)
                 .toList();
     }
-    private List<Long> listarIdEmpleados(Registro r)
-    {
+
+    private List<Long> listarIdEmpleados(Registro r) {
         return r.getParticipantes().stream()
                 .map(Empleado_modelo::getLegajo)
                 .toList();
@@ -155,10 +159,10 @@ public class  RegistroService {
         Registro registro = new Registro();
 
         Tarea t = iTareaRepository.findById(dto.tareaId())
-                .orElseThrow(()-> new TareaNoEncontradaExeption(dto.tareaId()));
+                .orElseThrow(() -> new TareaNoEncontradaExeption(dto.tareaId()));
 
         Cliente c = iClienteRepository.findById(dto.clienteId())
-                .orElseThrow(()-> new ClienteNoEncontradoException(dto.clienteId()));
+                .orElseThrow(() -> new ClienteNoEncontradoException(dto.clienteId()));
 
         registro.setEProceso(EProceso.ESPERA);
 
@@ -185,24 +189,22 @@ public class  RegistroService {
 
     public CrearRegistroDTO modificarRegistro(Long id, CrearRegistroDTO dto) throws RegistroNoEncontradoException, TareaNoEncontradaExeption, ClienteNoEncontradoException {
         Registro registro = iRegistroRepository.findById(id)
-                .orElseThrow(()-> new RegistroNoEncontradoException(id));
+                .orElseThrow(() -> new RegistroNoEncontradoException(id));
 
         Tarea t = iTareaRepository.findById(dto.tareaId())
-                .orElseThrow(()-> new TareaNoEncontradaExeption(dto.tareaId()));
+                .orElseThrow(() -> new TareaNoEncontradaExeption(dto.tareaId()));
 
         Cliente c = iClienteRepository.findById(dto.clienteId())
-                .orElseThrow(()-> new ClienteNoEncontradoException(dto.clienteId()));
+                .orElseThrow(() -> new ClienteNoEncontradoException(dto.clienteId()));
+
+        EProceso anterior = registro.getEProceso();
 
         registro.setTitulo(dto.titulo());
-
         registro.setEProceso(dto.proceso());
-
         registro.setTarea(t);
-
         registro.setCliente(c);
 
-
-        if(dto.participantesId() != null && !dto.participantesId().isEmpty()) {
+        if (dto.participantesId() != null && !dto.participantesId().isEmpty()) {
             List<Empleado_modelo> participantes = listarEmpleados(dto);
 
             registro.setParticipantes(participantes);
@@ -210,6 +212,20 @@ public class  RegistroService {
 
         Registro nuevoRegistro = iRegistroRepository.save(registro);
 
+        if (anterior != nuevoRegistro.getEProceso()) {
+            notificacionClienteService.notificarCambioEstado(
+                    new NotificacionClienteService.DatosCambioEstado(
+                            nuevoRegistro.getId(),
+                            nuevoRegistro.getTitulo(),
+                            nuevoRegistro.getCliente().getIdCliente(),
+                            nuevoRegistro.getCliente().getEmail(),
+                            nuevoRegistro.getCliente().getNombre(),
+                            nuevoRegistro.getTarea().getTitulo(),
+                            anterior,
+                            nuevoRegistro.getEProceso()
+                    )
+            );
+        }
 
         return new CrearRegistroDTO(
                 nuevoRegistro.getTitulo(),
@@ -220,17 +236,17 @@ public class  RegistroService {
                 nuevoRegistro.getPublicado());
     }
 
-    public RegistroDTO publicarRegistro(Long id){
+    public RegistroDTO publicarRegistro(Long id) {
         Registro registro = iRegistroRepository.findById(id)
-                .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND,"Registro no encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Registro no encontrado"));
         registro.setPublicado(true);
 
         return convertirADTO(registro);
     }
 
     public void eliminarRegistro(Long id) throws RegistroNoEncontradoException {
-       Registro r = iRegistroRepository.findById(id).orElseThrow(()-> new RegistroNoEncontradoException(id));
-       r.setEEstadoActividad(EEstadoActividad.CANCELADO);
-       iRegistroRepository.save(r);
+        Registro r = iRegistroRepository.findById(id).orElseThrow(() -> new RegistroNoEncontradoException(id));
+        r.setEEstadoActividad(EEstadoActividad.CANCELADO);
+        iRegistroRepository.save(r);
     }
 }
