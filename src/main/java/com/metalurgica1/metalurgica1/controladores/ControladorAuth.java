@@ -5,12 +5,12 @@ import com.metalurgica1.metalurgica1.DTO.AuthRequest;
 import com.metalurgica1.metalurgica1.DTO.AuthResponse;
 import com.metalurgica1.metalurgica1.modelo.Administrador;
 import com.metalurgica1.metalurgica1.modelo.Cliente;
+import com.metalurgica1.metalurgica1.modelo.Empleado_Gerente;
 import com.metalurgica1.metalurgica1.modelo.Empleado_modelo;
 import com.metalurgica1.metalurgica1.repositorio.IAdministradorRepository;
 import com.metalurgica1.metalurgica1.repositorio.IClienteRepository;
 import com.metalurgica1.metalurgica1.repositorio.IEmpleadoRepository;
-import com.metalurgica1.metalurgica1.service.AdministradorService;
-import com.metalurgica1.metalurgica1.service.ClienteService;
+import com.metalurgica1.metalurgica1.repositorio.IGerenteRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -30,7 +30,7 @@ public class ControladorAuth {
     private final IAdministradorRepository administradorRepository;
     private final IClienteRepository clienteRepository;
     private final IEmpleadoRepository empleadoRepository;
-    private final ClienteService clienteService;
+    private final IGerenteRepository gerenteRepository;
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request) {
@@ -45,6 +45,9 @@ public class ControladorAuth {
 
         Administrador admin = administradorRepository.findByEmail(request.email());
         if (admin != null) idUsuario = admin.getId_administrador();
+
+        Empleado_Gerente gerente = gerenteRepository.findByEmail(request.email());
+        if (gerente != null) idUsuario = gerente.getLegajo();
 
         Cliente cliente = clienteRepository.findByEmail(request.email());
         if (cliente != null) idUsuario = cliente.getIdCliente();
