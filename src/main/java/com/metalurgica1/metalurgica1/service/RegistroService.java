@@ -3,7 +3,6 @@ package com.metalurgica1.metalurgica1.service;
 import com.metalurgica1.metalurgica1.DTO.*;
 import com.metalurgica1.metalurgica1.modelo.*;
 import com.metalurgica1.metalurgica1.modelo.enums.EEstadoActividad;
-import com.metalurgica1.metalurgica1.modelo.enums.EEtiquetaDeAcceso;
 import com.metalurgica1.metalurgica1.modelo.enums.EProceso;
 import com.metalurgica1.metalurgica1.repositorio.IClienteRepository;
 import com.metalurgica1.metalurgica1.repositorio.IRegistroRepository;
@@ -16,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -127,7 +127,7 @@ public class RegistroService {
     private List<Empleado_modelo> listarEmpleados(CrearRegistroDTO dto) {
         return dto.participantesId().stream()
                 .map(empleadoModeloService::buscarEntidadPorLegajo)
-                .toList();
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     private List<Long> listarIdEmpleados(Registro r) {
