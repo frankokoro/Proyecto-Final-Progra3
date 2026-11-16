@@ -29,7 +29,7 @@ import java.util.List;
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<GerenteDTO> buscarEmpleado(Long id) {
+    public ResponseEntity<GerenteDTO> buscarEmpleado(@PathVariable Long id) {
         try {
             GerenteDTO gerente = gerenteService.listarGerente(id);
             return ResponseEntity.ok(gerente);
