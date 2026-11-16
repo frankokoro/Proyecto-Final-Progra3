@@ -8,6 +8,8 @@ import com.metalurgica1.metalurgica1.modelo.enums.EEstadoActividad;
 import com.metalurgica1.metalurgica1.repositorio.IEmpleadoRepository;
 import com.metalurgica1.metalurgica1.repositorio.IGerenteRepository;
 import com.metalurgica1.metalurgica1.service.Excepciones.EmpleadoNoEncontradoException;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +25,9 @@ public class EmpleadoModeloService {
     private IEmpleadoRepository iEmpleadoRepository;
     @Autowired
     private IGerenteRepository iGerenteRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public EmpleadoModeloService(IEmpleadoRepository iEmpleadoRepository, IGerenteRepository iGerenteRepository) {
         this.iEmpleadoRepository = iEmpleadoRepository;
@@ -44,6 +49,16 @@ public class EmpleadoModeloService {
 
         public EmpleadoModeloDTO buscarEmpleadoPorId(Long legajo){
             return listarTodosEmpleados().stream().filter(p->p.legajo().equals(legajo)).findFirst().orElseThrow(()->new RuntimeException("Empleado con id"+ legajo+" no encontrado"));
+        }
+
+        public Empleado_modelo buscarEntidadPorLegajo(Long legajo){
+            Empleado_modelo empleado = entityManager.find(Empleado_modelo.class, legajo);
+
+            if(empleado == null || empleado.getEEstadoActividad() != EEstadoActividad.ACTIVO){
+                throw new RuntimeException("Empleado con id "+ legajo +" no encontrado");
+            }
+
+            return empleado;
         }
 
         public Optional<EmpleadoModeloDTO> buscarEmpleadoPorEmail(String email){

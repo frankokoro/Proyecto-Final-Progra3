@@ -13,6 +13,7 @@ import com.metalurgica1.metalurgica1.service.Excepciones.RegistroNoEncontradoExc
 import com.metalurgica1.metalurgica1.service.Excepciones.TareaNoEncontradaExeption;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -125,8 +126,7 @@ public class RegistroService {
 
     private List<Empleado_modelo> listarEmpleados(CrearRegistroDTO dto) {
         return dto.participantesId().stream()
-                .map(empleadoModeloService::buscarEmpleadoPorId)
-                .map(this::convertirDtoAEntidad)
+                .map(empleadoModeloService::buscarEntidadPorLegajo)
                 .toList();
     }
 
@@ -136,25 +136,8 @@ public class RegistroService {
                 .toList();
     }
 
-    private Empleado_modelo convertirDtoAEntidad(EmpleadoModeloDTO dto) {
-        Empleado_modelo empleado;
 
-        if (dto.eEtiquetaDeAcceso() == EEtiquetaDeAcceso.GERENTE) {
-            empleado = new Empleado_Gerente();
-        } else {
-            empleado = new Empleado();
-        }
-        empleado.setLegajo(dto.legajo());
-        empleado.setNombre(dto.nombre());
-        empleado.setEmail(dto.email());
-        empleado.setTelefono(dto.telefono());
-        empleado.setDni(dto.dni());
-        empleado.setEEstadoActividad(EEstadoActividad.ACTIVO);
-
-        return empleado;
-    }
-
-
+    @Transactional
     public CrearRegistroDTO crearRegistro(CrearRegistroDTO dto) throws TareaNoEncontradaExeption, ClienteNoEncontradoException {
         Registro registro = new Registro();
 
@@ -187,6 +170,7 @@ public class RegistroService {
                 nuevoRegistro.getPublicado());
     }
 
+    @Transactional
     public CrearRegistroDTO modificarRegistro(Long id, CrearRegistroDTO dto) throws RegistroNoEncontradoException, TareaNoEncontradaExeption, ClienteNoEncontradoException {
         Registro registro = iRegistroRepository.findById(id)
                 .orElseThrow(() -> new RegistroNoEncontradoException(id));
@@ -236,12 +220,15 @@ public class RegistroService {
                 nuevoRegistro.getPublicado());
     }
 
+    @Transactional
     public RegistroDTO publicarRegistro(Long id) {
         Registro registro = iRegistroRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Registro no encontrado"));
         registro.setPublicado(true);
 
-        return convertirADTO(registro);
+        Registro guardado = iRegistroRepository.save(registro);
+
+        return convertirADTO(guardado);
     }
 
     public void eliminarRegistro(Long id) throws RegistroNoEncontradoException {
