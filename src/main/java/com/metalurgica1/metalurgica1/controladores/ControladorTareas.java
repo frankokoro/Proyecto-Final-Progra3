@@ -64,11 +64,11 @@ public class ControladorTareas {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> eliminarTarea(@PathVariable Long id){
+    public ResponseEntity<Void> eliminarTarea(@PathVariable Long id){
         try
         {
             tareaService.eliminarTarea(id);
-            return ResponseEntity.ok("Tarea eliminada correctamente");
+            return ResponseEntity.noContent().build();
         } catch (TareaNoEncontradaExeption e) {
             log.error("",e);
             return ResponseEntity.notFound().build();

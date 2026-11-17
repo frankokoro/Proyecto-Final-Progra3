@@ -69,7 +69,7 @@ public class RegistroService {
                         r.getEProceso(),
                         listarIdEmpleados(r),
                         r.getPublicado()))
-                .toList();
+                .collect(Collectors.toList());
     }
 
     public List<Empleado_modelo> listarEmpleados() {
@@ -93,7 +93,7 @@ public class RegistroService {
                         t.getDescripcionGeneral(),
                         t.getCantidad()
                 ))
-                .toList();
+                .collect(Collectors.toList());
     }
 
     public RegistroDTO buscarRegistroPorId(Long id) throws RegistroNoEncontradoException {
@@ -133,7 +133,7 @@ public class RegistroService {
     private List<Long> listarIdEmpleados(Registro r) {
         return r.getParticipantes().stream()
                 .map(Empleado_modelo::getLegajo)
-                .toList();
+                .collect(Collectors.toList());
     }
 
 
