@@ -73,7 +73,7 @@ public class SecurityConfig {
                         ).hasAnyRole("GERENTE", "ADMIN")
                         .requestMatchers("/api/tareas/**").hasAnyRole("EMPLEADO", "GERENTE", "ADMIN")
                         .requestMatchers("/api/registros/**").hasAnyRole("EMPLEADO", "GERENTE", "ADMIN")
-                        .requestMatchers("/solicitudes/**").hasAnyRole("GERENTE", "ADMIN")
+                        .requestMatchers("/api/solicitudes/**").hasAnyRole("GERENTE", "ADMIN")
                         .requestMatchers("/api/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
