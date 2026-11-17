@@ -136,6 +136,32 @@ public class RegistroService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * El historial de tareas del empleado vive en otra tabla (empleado_historial)
+     * y no se actualiza solo cuando cambian los participantes de un registro.
+     * Al asignar un registro se agrega su tarea al historial de cada empleado
+     * participante. La operación es idempotente para no duplicar tareas.
+     */
+    private void sincronizarHistorial(List<Empleado_modelo> participantes, Tarea tarea) {
+        for (Empleado_modelo participante : participantes) {
+            if (!(participante instanceof Empleado empleado)) {
+                continue; // Los gerentes no tienen historial de tareas.
+            }
+
+            List<Tarea> historial = empleado.getHistorial();
+            if (historial == null) {
+                historial = new ArrayList<>();
+                empleado.setHistorial(historial);
+            }
+
+            boolean yaAsignada = historial.stream()
+                    .anyMatch(t -> t != null && t.getId() != null && t.getId().equals(tarea.getId()));
+
+            if (!yaAsignada) {
+                historial.add(tarea);
+            }
+        }
+    }
 
     @Transactional
     public CrearRegistroDTO crearRegistro(CrearRegistroDTO dto) throws TareaNoEncontradaExeption, ClienteNoEncontradoException {
@@ -158,6 +184,7 @@ public class RegistroService {
         registro.setEEstadoActividad(EEstadoActividad.ACTIVO);
 
         registro.setParticipantes(listarEmpleados(dto));
+        sincronizarHistorial(registro.getParticipantes(), t);
 
         Registro nuevoRegistro = iRegistroRepository.save(registro);
 
@@ -192,6 +219,11 @@ public class RegistroService {
             List<Empleado_modelo> participantes = listarEmpleados(dto);
 
             registro.setParticipantes(participantes);
+            sincronizarHistorial(participantes, t);
+        } else {
+            // Los perfiles envían la lista vacía cuando solo cambia el estado:
+            // se conservan los participantes y se asegura el historial de la tarea.
+            sincronizarHistorial(new ArrayList<>(registro.getParticipantes()), t);
         }
 
         Registro nuevoRegistro = iRegistroRepository.save(registro);
